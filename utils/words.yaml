@@ -1,5 +1,5 @@
 data_type: text
-repo_path: /federated
+repo_path: .
 word_dictionary_path: utils/word_dictionary.pt
 
 # prepare data

@@ -1,5 +1,5 @@
 data_type: image
-repo_path: /federated
+repo_path: .
 
 recreate_dataset: false
 
