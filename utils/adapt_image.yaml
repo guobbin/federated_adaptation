@@ -5,7 +5,7 @@ save_name: image_debug
 recreate_dataset: false
 
 # prepare the federated learning model to be adapted
-# resumed_model: model_image_Nov.09_01.55.54/model_last.pt.tar.best
+resumed_model: model_image_Aug.19_15.53.37/model_last.pt.tar.best
 ###averaging: model_image_Nov.09_01.58.58/model_last.pt.tar.best
 ###averaging_diff: model_image_Nov.09_01.59.42/model_last.pt.tar.best
 ###median: model_image_Nov.09_01.55.54/model_last.pt.tar.best

@@ -1,7 +1,7 @@
 data_type: image
 repo_path: .
 
-recreate_dataset: false
+recreate_dataset: true
 
 batch_size: 32
 test_batch_size: 100
