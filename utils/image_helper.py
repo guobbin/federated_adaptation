@@ -3,7 +3,8 @@ from collections import defaultdict
 from utils.helper import Helper
 import random
 import logging
-from models.resnet import ResNet18
+# from models.resnet import ResNet18
+from models.simple import CNNCifar
 from torchvision import datasets, transforms
 import numpy as np
 logger = logging.getLogger("logger")
@@ -15,10 +16,14 @@ class ImageHelper(Helper):
     test_loader = None
 
     def create_model(self):
-        local_model = ResNet18(name='Local',
+        # local_model = ResNet18(name='Local',
+        #                        created_time=self.params['current_time'])
+        local_model = CNNCifar(name='Local',
                                created_time=self.params['current_time'])
         local_model.to(self.device)
-        target_model = ResNet18(name='Target',
+        # target_model = ResNet18(name='Target',
+        #                         created_time=self.params['current_time'])
+        target_model = CNNCifar(name='Target',
                                 created_time=self.params['current_time'])
         target_model.to(self.device)
         if self.resumed_model:
@@ -66,13 +71,14 @@ class ImageHelper(Helper):
                 alpha=0.9)
             self.train_data = [(user, self.get_train(indices_per_participant[user])) for user in range(self.params['number_of_total_participants'])]
             self.train_image_weight = train_image_weight
-            auxiliary_index_intest = random.sample(list(range(len(self.test_dataset))), len(self.test_dataset)//10)
-            test_index_remove_auxiliary = [elem for elem in range(len(self.test_dataset)) if elem not in auxiliary_index_intest] 
-            self.auxiliary_data = self.get_test(auxiliary_index_intest)
-            self.test_data = self.get_test(test_index_remove_auxiliary)
+            # auxiliary_index_intest = random.sample(list(range(len(self.test_dataset))), len(self.test_dataset)//10)
+            # test_index_remove_auxiliary = [elem for elem in range(len(self.test_dataset)) if elem not in auxiliary_index_intest]
+            # self.auxiliary_data = self.get_test(auxiliary_index_intest)
+            # self.test_data = self.get_test(test_index_remove_auxiliary)
+            self.test_data = torch.utils.data.DataLoader(self.test_dataset, batch_size=self.params['test_batch_size'])
             torch.save(self.train_data, train_data_path)
             torch.save(self.train_image_weight, train_image_weight_path)
-            torch.save(self.auxiliary_data, auxiliary_data_path)
+            # torch.save(self.auxiliary_data, auxiliary_data_path)
             torch.save(self.test_data, test_data_path)
         else:
             self.train_data = torch.load(train_data_path)

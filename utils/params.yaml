@@ -1,15 +1,15 @@
 data_type: image
 repo_path: .
 
-recreate_dataset: false
+recreate_dataset: true
 
-batch_size: 32
+batch_size: 10
 test_batch_size: 100
-lr: 0.1
-momentum: 0.9
-decay: 0.0005
-total_rounds: 999
-save_on_epochs: []
+lr: 0.01
+momentum: 0.5
+decay: 0.000
+total_rounds: 199
+save_on_rounds: [50,100,150,200]
 optimizer: SGD
 multi_gpu: false
 
@@ -20,7 +20,7 @@ aggregation_type: averaging
 ### averaging or median
 number_of_total_participants: 100
 no_models: 10
-retrain_no_times: 2
+retrain_no_times: 5
 eta: 1
 
 diff_privacy: false

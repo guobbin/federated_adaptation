@@ -176,6 +176,11 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, adap
                     optimizer.step()
                 else:
                     optimizer.step()
+            if internal_epoch % 5 == 1 or internal_epoch == helper.adaptation_epoch:
+                test_loss, _, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model, image_trainset_weight=image_trainset_weight)
+                helper.writer.add_scalar(f'test_acc_user{model_id}', (correct_class_acc * image_trainset_weight).sum(), internal_epoch)
+                helper.writer.add_scalar(f'test_loss_user{model_id}', test_loss, internal_epoch)
+
         t = time.time()
         logger.info(f'time spent on local adaptation: {t-start_time}')
         logger.info(f'testing adapted model on local testset at model_id: {model_id}')
@@ -214,6 +219,9 @@ if __name__ == '__main__':
     adaptation_helper.create_model()
 
     # configure logging
+    wr = SummaryWriter(log_dir=f'{adaptation_helper.repo_path}/runs/{args.name}_{current_time}')
+    adaptation_helper.writer = wr
+
     if adaptation_helper.log:
         logger = create_logger()
         fh = logging.FileHandler(filename=f'{adaptation_helper.folder_path}/log.txt')
@@ -228,8 +236,6 @@ if __name__ == '__main__':
         logger = create_logger()
 
     if adaptation_helper.tb:
-        wr = SummaryWriter(log_dir=f'{adaptation_helper.repo_path}/runs/{args.name}')
-        adaptation_helper.writer = wr
         table = create_table(adaptation_helper.params)
         adaptation_helper.writer.add_text('Model Params', table)
         print(adaptation_helper.lr, table)

@@ -2,20 +2,20 @@ data_type: image
 repo_path: .
 save_name: image_debug
 
-recreate_dataset: false
+recreate_dataset: true
 
 # prepare the federated learning model to be adapted
-# resumed_model: model_image_Nov.09_01.55.54/model_last.pt.tar.best
+resumed_model: model_image_Sep.03_15.59.28/model_last.pt.tar.best
 ###averaging: model_image_Nov.09_01.58.58/model_last.pt.tar.best
 ###averaging_diff: model_image_Nov.09_01.59.42/model_last.pt.tar.best
 ###median: model_image_Nov.09_01.55.54/model_last.pt.tar.best
 
-batch_size: 32
-test_batch_size: 100
-lr: 0.001
-momentum: 0.9
-decay: 0.0005
-total_rounds: 999
+batch_size: 64
+test_batch_size: 1000
+lr: 0.0001
+momentum: 0.5
+decay: 0.00
+total_rounds: 199
 lamb: 5000
 alpha: 0.95
 temperature: 6
@@ -34,7 +34,7 @@ resumed_fisher: data/cifar_averaging_fisher.pt
 
 # parameters for Federated Learning
 number_of_total_participants: 100
-adaptation_epoch: 200
+adaptation_epoch: 50
 
 log: True
 tb: True

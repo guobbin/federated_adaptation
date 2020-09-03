@@ -45,3 +45,55 @@ class SimpleMnist(SimpleNet):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+
+class CNNCifar(SimpleNet):
+    def __init__(self, name=None, created_time=None):
+        super(CNNCifar, self).__init__(name, created_time)
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
+class GateCifar(SimpleNet):
+    def __init__(self, name=None, created_time=None):
+        super(GateCifar, self).__init__(name, created_time)
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+        self.local_fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.local_fc2 = nn.Linear(120, 84)
+        self.local_fc3 = nn.Linear(84, 10)
+
+        self.local_gate = nn.Linear(3 * 32 * 32, 1)
+
+    def forward(self, x):
+        gate = self.local_gate(x)
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        y = F.relu(self.fc1(x))
+        y = F.relu(self.fc2(y))
+        y = self.fc3(y)
+
+        z = F.relu(self.fc1(x))
+        z = F.relu(self.fc2(z))
+        z = self.fc3(z)
+
+        return y, z, gate

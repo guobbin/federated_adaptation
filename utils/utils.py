@@ -115,12 +115,14 @@ def criterion_kd(helper, outputs, targets, teacher_outputs):
     return KD_loss
 
 
-def test(helper, data_source, model):
+def test(helper, data_source, model, image_trainset_weight=None):
     model.eval()
     total_loss = 0.0
     correct = 0.0
     correct_class = np.zeros(10)
-    correct_class_acc = np.zeros(10)
+    correctclass_acc = np.zeros(10)
+    c_class = np.zeros(10)
+    loss_class_acc = np.zeros(10)
     correct_class_size = np.zeros(10)
     total_test_words = 0.0
     if helper.data_type == 'text':
@@ -175,4 +177,9 @@ def test(helper, data_source, model):
             total_l = total_loss / dataset_size
             print(f'___Test {model.name} , Average loss: {total_l},  '
                         f'Accuracy: {correct}/{dataset_size} ({acc}%)')
-            return total_l, acc, correct_class_acc
+            if image_trainset_weight is None:
+                return total_l, acc, correct_class_acc
+            else:
+                return total_l, acc, (correct_class_acc * image_trainset_weight).sum()
+
+
