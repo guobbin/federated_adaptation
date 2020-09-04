@@ -98,7 +98,7 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, adap
             if helper.data_type == 'text':
                 freeze = 4
             else:
-                freeze = 60
+                freeze = 4
             num = 0
             for parame in model.parameters():
                 if num < freeze:

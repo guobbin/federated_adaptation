@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import torch
+import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.utils.data.sampler import Sampler
 from sklearn.metrics import confusion_matrix
@@ -120,7 +121,7 @@ def test(helper, data_source, model, image_trainset_weight=None):
     total_loss = 0.0
     correct = 0.0
     correct_class = np.zeros(10)
-    correctclass_acc = np.zeros(10)
+    correct_class_acc = np.zeros(10)
     c_class = np.zeros(10)
     loss_class_acc = np.zeros(10)
     correct_class_size = np.zeros(10)

@@ -2,7 +2,7 @@ data_type: image
 repo_path: .
 save_name: image_debug
 
-recreate_dataset: true
+recreate_dataset: false
 
 # prepare the federated learning model to be adapted
 resumed_model: model_image_Sep.03_15.59.28/model_last.pt.tar.best
@@ -12,9 +12,9 @@ resumed_model: model_image_Sep.03_15.59.28/model_last.pt.tar.best
 
 batch_size: 64
 test_batch_size: 1000
-lr: 0.0001
+lr: 0.001
 momentum: 0.5
-decay: 0.00
+decay: 0.0005
 total_rounds: 199
 lamb: 5000
 alpha: 0.95
@@ -26,7 +26,7 @@ scratch: false
 ### scratch is an option to train local models from scratch for each participant
 only_eval: false
 ### only_eval is an option to only evaluate the resumed model locally at each participant's local testset
-freeze_base: false
+freeze_base: true
 ewc: false
 kd: false
 resumed_fisher: data/cifar_averaging_fisher.pt
@@ -34,7 +34,7 @@ resumed_fisher: data/cifar_averaging_fisher.pt
 
 # parameters for Federated Learning
 number_of_total_participants: 100
-adaptation_epoch: 50
+adaptation_epoch: 100
 
 log: True
 tb: True
