@@ -261,7 +261,8 @@ if __name__ == '__main__':
         else:
             fisher = None
         random.seed(66)
-        if not os.path.exists(adaptation_helper.save_name + '_AdaptedModel_LocalTest_Acc.npy'):
+        # if not os.path.exists(adaptation_helper.save_name + '_AdaptedModel_LocalTest_Acc.npy'):
+        if True:
             adaptedmodel_local_acc = list()
         else:
             adaptedmodel_local_acc = list(np.load(adaptation_helper.save_name + '_AdaptedModel_LocalTest_Acc.npy'))
