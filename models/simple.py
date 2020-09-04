@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 
 class SimpleNet(nn.Module):
@@ -97,3 +98,15 @@ class GateCifar(SimpleNet):
         z = self.fc3(z)
 
         return y, z, gate
+
+
+class Gate(SimpleNet):
+    def __init__(self, dim_in, dim_out, name='Gate', created_time=None):
+        super(Gate, self).__init__(name, created_time)
+        self.fc = nn.Linear(3 * 32 * 32, 1)
+
+    def forward(self, x):
+        x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])
+        x = self.fc(x)
+        x = torch.sigmoid(x)
+        return x

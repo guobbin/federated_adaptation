@@ -4,11 +4,13 @@ from utils.helper import Helper
 import random
 import logging
 # from models.resnet import ResNet18
-from models.simple import CNNCifar
+from models.simple import CNNCifar, Gate
 from torchvision import datasets, transforms
 import numpy as np
 logger = logging.getLogger("logger")
 import random
+import math
+import os
 
 class ImageHelper(Helper):
     classes = None
@@ -63,7 +65,7 @@ class ImageHelper(Helper):
         train_image_weight_path = f"{self.params['repo_path']}/data/CIFAR_train_image_weight.pt"
         auxiliary_data_path = f"{self.params['repo_path']}/data/CIFAR_auxiliary_data.pt.tar"
         test_data_path = f"{self.params['repo_path']}/data/CIFAR_test_data.pt.tar"
-                        
+
         if self.recreate_dataset:
             ## sample indices for participants using Dirichlet distribution
             indices_per_participant, train_image_weight = self.sample_dirichlet_data(self.train_dataset,
@@ -161,3 +163,50 @@ class ImageHelper(Helper):
             for j in range(10):
                 clas_weight[i,j] = float(datasize[i,j])/float(train_img_size[i])
         return per_participant_list, clas_weight
+
+
+class GateHelper(ImageHelper):
+    def __init__(self, current_time, params, name):
+        super().__init__(current_time, params, name)
+        self.gate_lr = 0.1
+        self.gate_momentum = 0.9
+        self.gate_decay = 5e-4
+        self.folder_path = f'{self.repo_path}/saved_models/model_gate_{self.name}_{current_time}'
+        if self.log:
+            try:
+                os.mkdir(self.folder_path)
+            except FileExistsError:
+                logger.info('Folder already exists')
+        else:
+            self.folder_path = None
+
+        # if not self.params.get('environment_name', False):
+        #     self.params['environment_name'] = self.name
+        self.params['folder_path'] = self.folder_path
+
+    def create_model(self):
+        # local_model = ResNet18(name='Local',
+        #                        created_time=self.params['current_time'])
+        local_model = CNNCifar(name='Local',
+                               created_time=self.params['current_time'])
+        local_model.to(self.device)
+        # target_model = ResNet18(name='Target',
+        #                         created_time=self.params['current_time'])
+        target_model = CNNCifar(name='Target',
+                                created_time=self.params['current_time'])
+        target_model.to(self.device)
+        image_size = self.train_dataset[0][0].shape
+        len_in = 1
+        for x in image_size:
+            len_in *= x
+        local_gate = Gate(dim_in=len_in, dim_out=10)
+        local_gate.to(self.device)
+
+        if self.resumed_model:
+            target_params = torch.load(f"{self.params['repo_path']}/saved_models/{self.params['resumed_model']}")
+            target_model.load_state_dict(target_params['state_dict'])
+        self.start_round = 1
+
+        self.local_model = local_model
+        self.target_model = target_model
+        self.gate_model = local_gate

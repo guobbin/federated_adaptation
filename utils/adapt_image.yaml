@@ -6,6 +6,7 @@ recreate_dataset: false
 
 # prepare the federated learning model to be adapted
 resumed_model: model_image_Sep.03_15.59.28/model_last.pt.tar.best
+local_best_folder: model_image_adapt_Sep.04_11.42.28
 ###averaging: model_image_Nov.09_01.58.58/model_last.pt.tar.best
 ###averaging_diff: model_image_Nov.09_01.59.42/model_last.pt.tar.best
 ###median: model_image_Nov.09_01.55.54/model_last.pt.tar.best

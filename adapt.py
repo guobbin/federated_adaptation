@@ -63,6 +63,7 @@ def eval_one_participant(helper, data_source, model):
             acc = 100.0 * (float(correct) / float(dataset_size))
     return acc
 
+
 def test_globalmodel_local(helper, data_sets, target_model):
     globalmodel_local_acc = list()
     for model_id in range(len(data_sets)):
@@ -132,6 +133,7 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, adap
             image_trainset_weight = image_trainset_weight/image_trainset_weight.sum()
         
         start_time = time.time()
+        best_acc = 0
         for internal_epoch in range(1, helper.adaptation_epoch + 1):
             model.train()            
             if helper.data_type == 'text':
@@ -176,9 +178,16 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, adap
                     optimizer.step()
                 else:
                     optimizer.step()
+
             if internal_epoch % 5 == 1 or internal_epoch == helper.adaptation_epoch:
                 test_loss, _, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model, image_trainset_weight=image_trainset_weight)
-                helper.writer.add_scalar(f'test_acc_user{model_id}', (correct_class_acc * image_trainset_weight).sum(), internal_epoch)
+                local_weigthed_test_acc = (correct_class_acc * image_trainset_weight).sum()
+                if local_weigthed_test_acc > best_acc:
+                    model_name = '{0}/local_model{1}.pt.tar.best'.format(helper.params['folder_path'], model_id)
+                    saved_dict = {'state_dict': model.state_dict(), 'adaptation_epoch': internal_epoch}
+                    torch.save(saved_dict, model_name)
+                    best_acc = local_weigthed_test_acc
+                helper.writer.add_scalar(f'test_acc_user{model_id}', local_weigthed_test_acc, internal_epoch)
                 helper.writer.add_scalar(f'test_loss_user{model_id}', test_loss, internal_epoch)
 
         t = time.time()
