@@ -100,13 +100,13 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
                 output1 = local_model(data)
                 output2 = target_model(data)
                 gate = model(data)
-                output = gate * output1 + (1-gate) * output2
-                loss = criterion(output, targets).mean()
-                # loss = (gate.view(batch[1].shape)*criterion(output1, targets) + (1-gate).view(batch[1].shape)*criterion(output2, targets)).mean()
+                # output = gate * output1 + (1-gate) * output2
+                # loss = criterion(output, targets).mean()
+                loss = (gate.view(batch[1].shape)*criterion(output1, targets) + (1-gate).view(batch[1].shape)*criterion(output2, targets)).mean()
                 loss.backward()
                 optimizer.step()
 
-            if internal_epoch % 5 == 1 or internal_epoch == helper.adaptation_epoch:
+            if internal_epoch == 1 or internal_epoch % helper.test_each_epochs == 0 or internal_epoch == helper.adaptation_epoch:
                 test_loss, _, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model)
                 helper.writer.add_scalar(f'test_acc_user{model_id}', (correct_class_acc * image_trainset_weight).sum(),
                                          internal_epoch)
@@ -143,10 +143,10 @@ def test(helper, data_source, model):
             output2 = helper.target_model(data)
             gate = helper.gate_model(data)
             # gate = torch.zeros_like(gate)
-            # output = gate * torch.softmax(output1, dim=1) + (1-gate) * torch.softmax(output2, dim=1)
-            # total_loss += (gate.view(batch[1].shape) * criterion(output1, targets) + (1 - gate).view(batch[1].shape) * criterion(output2, targets)).sum()
-            output = output1 * gate + output2 * (1-gate)
-            total_loss += criterion(output, targets).sum()
+            output = gate * torch.softmax(output1, dim=1) + (1-gate) * torch.softmax(output2, dim=1)
+            total_loss += (gate.view(batch[1].shape) * criterion(output1, targets) + (1 - gate).view(batch[1].shape) * criterion(output2, targets)).sum()
+            # output = output1 * gate + output2 * (1-gate)
+            # total_loss += criterion(output, targets).sum()
             pred = output.data.max(1)[1]  # get the index of the max log-probability
             correct += pred.eq(targets.data.view_as(pred)).cpu().sum().item()
             for i in range(10):

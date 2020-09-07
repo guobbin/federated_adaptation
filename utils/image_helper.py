@@ -168,6 +168,8 @@ class ImageHelper(Helper):
 class GateHelper(ImageHelper):
     def __init__(self, current_time, params, name):
         super().__init__(current_time, params, name)
+        self.adaptation_epoch = 100
+        self.test_each_epochs = 5
         self.gate_lr = 0.1
         self.gate_momentum = 0.9
         self.gate_decay = 5e-4
@@ -199,7 +201,7 @@ class GateHelper(ImageHelper):
         len_in = 1
         for x in image_size:
             len_in *= x
-        local_gate = Gate(dim_in=len_in, dim_out=10)
+        local_gate = Gate(dim_in=len_in, dim_out=1)
         local_gate.to(self.device)
 
         if self.resumed_model:

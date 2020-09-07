@@ -103,10 +103,17 @@ class GateCifar(SimpleNet):
 class Gate(SimpleNet):
     def __init__(self, dim_in, dim_out, name='Gate', created_time=None):
         super(Gate, self).__init__(name, created_time)
-        self.fc = nn.Linear(3 * 32 * 32, 1)
+        dim_hidden = 200
+        self.layer_input = nn.Linear(dim_in, dim_hidden)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout()
+        self.layer_hidden = nn.Linear(dim_hidden, dim_out)
 
     def forward(self, x):
         x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])
-        x = self.fc(x)
+        x = self.layer_input(x)
+        x = self.dropout(x)
+        x = self.relu(x)
+        x = self.layer_hidden(x)
         x = torch.sigmoid(x)
         return x
