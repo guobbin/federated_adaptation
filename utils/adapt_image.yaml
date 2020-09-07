@@ -13,7 +13,7 @@ local_best_folder: model_image_adapt_Sep.04_11.42.28
 
 batch_size: 64
 test_batch_size: 1000
-lr: 0.001
+lr: 0.1
 momentum: 0.5
 decay: 0.0005
 total_rounds: 199
