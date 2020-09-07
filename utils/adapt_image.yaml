@@ -22,6 +22,7 @@ alpha: 0.95
 temperature: 6
 optimizer: SGD
 multi_gpu: false
+gpu: 1
 
 scratch: false
 ### scratch is an option to train local models from scratch for each participant

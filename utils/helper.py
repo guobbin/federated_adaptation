@@ -27,9 +27,12 @@ class Helper:
         self.poisoned_data = None
         self.test_data_poison = None
         self.writer = None
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
         self.params = params
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        gpu = self.params.get('gpu', -1)
+        self.device = torch.device(
+            'cuda:{}'.format(gpu) if torch.cuda.is_available() and gpu != -1 else 'cpu')
+
         self.name = name
         self.best_loss = math.inf
         self.repo_path = self.params.get('repo_path', os.getcwd())
