@@ -116,7 +116,7 @@ def criterion_kd(helper, outputs, targets, teacher_outputs):
     return KD_loss
 
 
-def test(helper, data_source, model, image_trainset_weight=None):
+def test(helper, data_source, model):
     model.eval()
     total_loss = 0.0
     correct = 0.0
@@ -178,9 +178,6 @@ def test(helper, data_source, model, image_trainset_weight=None):
             total_l = total_loss / dataset_size
             print(f'___Test {model.name} , Average loss: {total_l},  '
                         f'Accuracy: {correct}/{dataset_size} ({acc}%)')
-            if image_trainset_weight is None:
-                return total_l, acc, correct_class_acc
-            else:
-                return total_l, acc, (correct_class_acc * image_trainset_weight).sum()
+            return total_l, acc, correct_class_acc
 
 

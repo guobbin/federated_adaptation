@@ -4,6 +4,8 @@ from datetime import datetime
 import os
 import logging
 import torch
+import torch.nn.functional as F
+from utils.utils import test as utiltest
 
 print(torch.__version__)
 
@@ -64,10 +66,16 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
         parame.requires_grad = False
     for parame in local_model.parameters():
         parame.requires_grad = False
+    print("global target model from resume")
+    utiltest(helper=helper, data_source=helper.test_data, model=target_model)
 
     for model_id in tqdm(range(len(train_data_sets))):
         iteration = 0
+        # init gate for user_model_id
         model = gate_model
+        for m in model.modules():
+            if hasattr(m, 'reset_parameters'):
+                m.reset_parameters()
 
         local_params = torch.load(
             f"{helper.params['repo_path']}/saved_models/{helper.params['local_best_folder']}/local_model{model_id}.pt.tar.best")
@@ -87,6 +95,11 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
         image_trainset_weight = image_trainset_weight / image_trainset_weight.sum()
 
         start_time = time.time()
+        total_test_loss, total_test_acc, correct_class_acc = utiltest(helper=helper, data_source=helper.test_data, model=helper.local_model)
+        helper.writer.add_scalar(f'user_{model_id}/local_test_acc', (correct_class_acc * image_trainset_weight).sum(),
+                                 0)
+        helper.writer.add_scalar(f'user_{model_id}/total_test_loss', total_test_loss, 0)
+        helper.writer.add_scalar(f'user_{model_id}/total_test_acc', total_test_acc, 0)
         for internal_epoch in range(1, helper.adaptation_epoch + 1):
             model.train()
             data_iterator = train_data
@@ -100,17 +113,24 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
                 output1 = local_model(data)
                 output2 = target_model(data)
                 gate = model(data)
+
+                loss1 = F.cross_entropy(output1, targets, reduce=False)
+                loss2 = F.cross_entropy(output2, targets, reduce=False)
+                gate_label = (loss1 > loss2).long()
+                loss = F.cross_entropy(gate, gate_label)
+
                 # output = gate * output1 + (1-gate) * output2
                 # loss = criterion(output, targets).mean()
-                loss = (gate.view(batch[1].shape)*criterion(output1, targets) + (1-gate).view(batch[1].shape)*criterion(output2, targets)).mean()
+                # loss = (gate.view(batch[1].shape)*criterion(output1, targets) + (1-gate).view(batch[1].shape)*criterion(output2, targets)).mean()
                 loss.backward()
                 optimizer.step()
 
             if internal_epoch == 1 or internal_epoch % helper.test_each_epochs == 0 or internal_epoch == helper.adaptation_epoch:
-                test_loss, _, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model)
-                helper.writer.add_scalar(f'test_acc_user{model_id}', (correct_class_acc * image_trainset_weight).sum(),
+                total_test_loss, total_test_acc, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model)
+                helper.writer.add_scalar(f'user_{model_id}/local_test_acc', (correct_class_acc * image_trainset_weight).sum(),
                                          internal_epoch)
-                helper.writer.add_scalar(f'test_loss_user{model_id}', test_loss, internal_epoch)
+                helper.writer.add_scalar(f'user_{model_id}/total_test_loss', total_test_loss, internal_epoch)
+                helper.writer.add_scalar(f'user_{model_id}/total_test_acc', total_test_acc, internal_epoch)
         t = time.time()
         logger.info(f'time spent on local adaptation: {t - start_time}')
         logger.info(f'testing adapted model on local testset at model_id: {model_id}')
@@ -141,10 +161,15 @@ def test(helper, data_source, model):
             data, targets = helper.get_batch(data_source, batch, evaluation=True)
             output1 = helper.local_model(data)
             output2 = helper.target_model(data)
-            gate = helper.gate_model(data)
+            gate = torch.softmax(helper.gate_model(data), dim=1)
+            loss1 = F.cross_entropy(output1, targets, reduction='none')
+            loss2 = F.cross_entropy(output2, targets, reduction='none')
+
             # gate = torch.zeros_like(gate)
-            output = gate * torch.softmax(output1, dim=1) + (1-gate) * torch.softmax(output2, dim=1)
-            total_loss += (gate.view(batch[1].shape) * criterion(output1, targets) + (1 - gate).view(batch[1].shape) * criterion(output2, targets)).sum()
+            total_loss += (torch.cat((loss1.unsqueeze(1), loss2.unsqueeze(1)), 1) * gate).sum()
+
+            output = gate[:, 0].unsqueeze(dim=1) * torch.softmax(output1, dim=1) + gate[:, 1].unsqueeze(dim=1) * torch.softmax(output2, dim=1)
+            # total_loss += (gate.view(batch[1].shape) * criterion(output1, targets) + (1 - gate).view(batch[1].shape) * criterion(output2, targets)).sum()
             # output = output1 * gate + output2 * (1-gate)
             # total_loss += criterion(output, targets).sum()
             pred = output.data.max(1)[1]  # get the index of the max log-probability
@@ -160,7 +185,6 @@ def test(helper, data_source, model):
         print(f'___Test {model.name} , Average loss: {total_l},  '
                     f'Accuracy: {correct}/{dataset_size} ({acc}%)')
         return total_l, acc, correct_class_acc
-
 
 
 if __name__ == '__main__':

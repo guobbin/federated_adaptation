@@ -115,5 +115,5 @@ class Gate(SimpleNet):
         x = self.dropout(x)
         x = self.relu(x)
         x = self.layer_hidden(x)
-        x = torch.sigmoid(x)
+        # x = torch.sigmoid(x)
         return x
