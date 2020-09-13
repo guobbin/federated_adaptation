@@ -51,6 +51,7 @@ class Helper:
         self.test_batch_size = self.params.get('test_batch_size', None)
         self.optimizer = self.params.get('optimizer', None)
         self.resumed_model = self.params.get('resumed_model', False)
+        self.non_iid_alpha = self.params.get('non_iid_alpha', 0.9)
         
         self.local_test_perc = self.params.get('local_test_perc', 10)
         self.only_eval = self.params.get('only_eval', False)

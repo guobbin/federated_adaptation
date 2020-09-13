@@ -94,6 +94,10 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
                 image_trainset_weight[labeli] += (label == labeli).sum()
         image_trainset_weight = image_trainset_weight / image_trainset_weight.sum()
 
+        helper.writer.add_histogram(f'user_{model_id}/data_distribution',
+                                 np.array(train_data.dataset.targets)[train_data.sampler.indices],
+                                 bins=np.arange(11))
+
         start_time = time.time()
         total_test_loss, total_test_acc, correct_class_acc = utiltest(helper=helper, data_source=helper.test_data, model=helper.local_model)
         helper.writer.add_scalar(f'user_{model_id}/local_test_acc', (correct_class_acc * image_trainset_weight).sum(),
@@ -114,8 +118,8 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
                 output2 = target_model(data)
                 gate = model(data)
 
-                loss1 = F.cross_entropy(output1, targets, reduce=False)
-                loss2 = F.cross_entropy(output2, targets, reduce=False)
+                loss1 = F.cross_entropy(output1, targets, reduction='none')
+                loss2 = F.cross_entropy(output2, targets, reduction='none')
                 gate_label = (loss1 > loss2).long()
                 loss = F.cross_entropy(gate, gate_label)
 
@@ -124,6 +128,8 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, gate
                 # loss = (gate.view(batch[1].shape)*criterion(output1, targets) + (1-gate).view(batch[1].shape)*criterion(output2, targets)).mean()
                 loss.backward()
                 optimizer.step()
+
+            helper.writer.add_scalar(f'user_{model_id}/gate_local_global_loss', loss, internal_epoch)
 
             if internal_epoch == 1 or internal_epoch % helper.test_each_epochs == 0 or internal_epoch == helper.adaptation_epoch:
                 total_test_loss, total_test_acc, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model)
@@ -203,6 +209,9 @@ if __name__ == '__main__':
     adaptation_helper = GateHelper(current_time=current_time, params=params_loaded,
                                         name=params_loaded.get('name', 'image_adapt'))
 
+    if not adaptation_helper.random:
+        adaptation_helper.fix_random()
+
     adaptation_helper.load_data()
     adaptation_helper.create_model()
 
@@ -227,9 +236,6 @@ if __name__ == '__main__':
         table = create_table(adaptation_helper.params)
         adaptation_helper.writer.add_text('Model Params', table)
         print(adaptation_helper.lr, table)
-
-    if not adaptation_helper.random:
-        adaptation_helper.fix_random()
 
     participant_ids = range(len(adaptation_helper.train_data))
     mean_acc = list()

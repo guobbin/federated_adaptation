@@ -70,7 +70,7 @@ class ImageHelper(Helper):
             ## sample indices for participants using Dirichlet distribution
             indices_per_participant, train_image_weight = self.sample_dirichlet_data(self.train_dataset,
                 self.params['number_of_total_participants'],
-                alpha=0.9)
+                alpha=self.non_iid_alpha)
             self.train_data = [(user, self.get_train(indices_per_participant[user])) for user in range(self.params['number_of_total_participants'])]
             self.train_image_weight = train_image_weight
             # auxiliary_index_intest = random.sample(list(range(len(self.test_dataset))), len(self.test_dataset)//10)
@@ -170,7 +170,7 @@ class GateHelper(ImageHelper):
         super().__init__(current_time, params, name)
         self.adaptation_epoch = 50
         self.test_each_epochs = 1
-        self.gate_lr = 0.01
+        self.gate_lr = 0.001
         self.gate_momentum = 0.9
         self.gate_decay = 5e-4
         self.folder_path = f'{self.repo_path}/saved_models/model_gate_{self.name}_{current_time}'

@@ -5,15 +5,18 @@ save_name: image_debug
 recreate_dataset: false
 
 # prepare the federated learning model to be adapted
-resumed_model: model_image_Sep.03_15.59.28/model_last.pt.tar.best
-local_best_folder: model_image_adapt_Sep.04_11.42.28
+#resumed_model: model_image_Sep.03_15.59.28/model_last.pt.tar.best
+resumed_model: model_image_Sep.11_20.29.10/model_last.pt.tar.best
+#local_best_folder: model_image_adapt_Sep.04_11.42.28
+#local_best_folder: model_image_adapt_Sep.11_21.15.33
+local_best_folder: model_image_adapt_Sep.11_21.59.03
 ###averaging: model_image_Nov.09_01.58.58/model_last.pt.tar.best
 ###averaging_diff: model_image_Nov.09_01.59.42/model_last.pt.tar.best
 ###median: model_image_Nov.09_01.55.54/model_last.pt.tar.best
 
 batch_size: 64
 test_batch_size: 1000
-lr: 0.1
+lr: 0.01
 momentum: 0.5
 decay: 0.0005
 total_rounds: 199
@@ -22,6 +25,7 @@ alpha: 0.95
 temperature: 6
 optimizer: SGD
 multi_gpu: false
+non_iid_alpht: 0.1
 gpu: 1
 
 scratch: false

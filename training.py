@@ -152,6 +152,9 @@ if __name__ == '__main__':
     else:
         runner_helper = TextHelper(current_time=current_time, params=params_loaded,
                                    name=params_loaded.get('name', 'text'))
+    # fix random seed
+    if not runner_helper.random:
+        runner_helper.fix_random()
 
     runner_helper.load_data()
     runner_helper.create_model()
@@ -181,10 +184,6 @@ if __name__ == '__main__':
         table = create_table(runner_helper.params)
         runner_helper.writer.add_text('Model Params', table)
         print(table)
-
-    # fix random seed
-    if not runner_helper.random:
-        runner_helper.fix_random()
 
     participant_ids = range(len(runner_helper.train_data))
     mean_acc = list()

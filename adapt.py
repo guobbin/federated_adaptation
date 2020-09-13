@@ -180,7 +180,7 @@ def adapt_local(helper, train_data_sets, fisher, target_model, local_model, adap
                     optimizer.step()
 
             if internal_epoch % 5 == 1 or internal_epoch == helper.adaptation_epoch:
-                test_loss, _, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model, image_trainset_weight=image_trainset_weight)
+                test_loss, _, correct_class_acc = test(helper=helper, data_source=helper.test_data, model=model)
                 local_weigthed_test_acc = (correct_class_acc * image_trainset_weight).sum()
                 if local_weigthed_test_acc > best_acc:
                     model_name = '{0}/local_model{1}.pt.tar.best'.format(helper.params['folder_path'], model_id)
@@ -224,6 +224,9 @@ if __name__ == '__main__':
         adaptation_helper = TextHelper(current_time=current_time, params=params_loaded,
                             name=params_loaded.get('name', 'text_adapt'))
 
+    if not adaptation_helper.random:
+        adaptation_helper.fix_random()
+
     adaptation_helper.load_data()
     adaptation_helper.create_model()
 
@@ -249,8 +252,6 @@ if __name__ == '__main__':
         adaptation_helper.writer.add_text('Model Params', table)
         print(adaptation_helper.lr, table)
 
-    if not adaptation_helper.random:
-        adaptation_helper.fix_random()
 
     participant_ids = range(len(adaptation_helper.train_data))
     mean_acc = list()
