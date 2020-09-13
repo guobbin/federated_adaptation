@@ -6,14 +6,14 @@ recreate_dataset: true
 batch_size: 10
 test_batch_size: 100
 lr: 0.01
-momentum: 0.5
+momentum: 0.9
 decay: 0.0005
 total_rounds: 199
 save_on_rounds: [50,100,150,200]
 optimizer: SGD
 multi_gpu: false
 gpu: 0
-non_iid_alpha: 0.1
+non_iid_alpha: 0.9
 
 save_model: true
 

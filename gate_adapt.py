@@ -216,7 +216,7 @@ if __name__ == '__main__':
     adaptation_helper.create_model()
 
     # configure logging
-    wr = SummaryWriter(log_dir=f'{adaptation_helper.repo_path}/runs/{args.name}_{current_time}')
+    wr = SummaryWriter(log_dir=f'{adaptation_helper.repo_path}/runs/gate_adapt_{args.name}_{current_time}')
     adaptation_helper.writer = wr
 
     if adaptation_helper.log:

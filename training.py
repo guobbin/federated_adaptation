@@ -21,7 +21,7 @@ logger = logging.getLogger("logger")
 criterion = torch.nn.CrossEntropyLoss()
 
 
-def train(helper, train_data_sets, local_model, target_model):
+def train(helper, train_data_sets, local_model, target_model, federated_round):
     """
     Performs one round of training federated `target_model`. It sequentially processes
     `train_data_sets` and returns a sum of all the models.
@@ -76,10 +76,10 @@ def train(helper, train_data_sets, local_model, target_model):
         else:
             _, (current_data_model, train_data) = train_data_sets[model_id]
 
+
         for internal_epoch in range(1, helper.retrain_no_times + 1):
             model.train()
-            total_loss = 0.
-
+            total_loss = []
             if helper.data_type == 'text':
                 data_iterator = range(0, train_data.size(0) - 1, helper.bptt)
             else:
@@ -121,8 +121,10 @@ def train(helper, train_data_sets, local_model, target_model):
                 else:
                     optimizer.step()
 
-                total_loss += loss.item()
-
+                total_loss.append(loss.item())
+            # train loss summary
+            # helper.writer.add_scalar(f'user_{model_id}/federated_train_loss', np.array(total_loss).mean(),
+            #                          (federated_round-1)*helper.retrain_no_times + internal_epoch)
         ### sum up the model updates
         for name, data in model.state_dict().items():
             if helper.tied and name == 'decoder.weight' or '__'in name:
@@ -159,6 +161,10 @@ if __name__ == '__main__':
     runner_helper.load_data()
     runner_helper.create_model()
 
+    # configure logging
+    wr = SummaryWriter(log_dir=f'{runner_helper.repo_path}/runs/fed_{args.name}_{current_time}')
+    runner_helper.writer = wr
+
     best_loss = float('inf')
 
     # configure logging
@@ -179,8 +185,6 @@ if __name__ == '__main__':
 
     # setup tensorboard
     if runner_helper.tb:
-        wr = SummaryWriter(log_dir=f'{runner_helper.repo_path}/runs/{args.name}')
-        runner_helper.writer = wr
         table = create_table(runner_helper.params)
         runner_helper.writer.add_text('Model Params', table)
         print(table)
@@ -191,6 +195,12 @@ if __name__ == '__main__':
     # save parameters
     with open(f'{runner_helper.folder_path}/params.yaml', 'w') as f:
         yaml.dump(runner_helper.params, f)
+
+    # data split
+    for model_id, train_data in runner_helper.train_data:
+        runner_helper.writer.add_histogram(f'user_{model_id}/data_distribution',
+                                           np.array(train_data.dataset.targets)[train_data.sampler.indices],
+                                           bins=np.arange(11))
 
     if not runner_helper.only_eval:
         dist_list = list()
@@ -209,7 +219,8 @@ if __name__ == '__main__':
             weight_acc = train(helper=runner_helper,
                                train_data_sets=train_sets,
                                local_model=runner_helper.local_model,
-                               target_model=runner_helper.target_model)
+                               target_model=runner_helper.target_model,
+                               federated_round=federated_round)
             logger.info(f'time spent on training: {time.time() - t}')
 
             # Aggregate the models
@@ -222,12 +233,17 @@ if __name__ == '__main__':
             else:
                 raise NotImplemented(f'Aggregation {runner_helper.aggregation_type} not yet implemented.')
 
+            round_loss, round_acc, _ = test(helper=runner_helper,
+                                            data_source=runner_helper.test_data,
+                                            model=runner_helper.target_model)
+            runner_helper.writer.add_scalar('federated_train/total_test_loss', round_loss, federated_round)
+            runner_helper.writer.add_scalar(f'federated_train/total_test_acc', round_acc, federated_round)
             if federated_round in runner_helper.save_on_rounds or (federated_round+1) % 1000 == 0:
                 t = time.time()
                 logger.info(f'testing global model at round: {federated_round}')
-                round_loss, round_acc, _ = test(helper=runner_helper,
-                                             data_source=runner_helper.test_data,
-                                             model=runner_helper.target_model)
+                # round_loss, round_acc, _ = test(helper=runner_helper,
+                #                              data_source=runner_helper.test_data,
+                #                              model=runner_helper.target_model)
                 test_loss.append(round_loss)
                 test_acc.append(round_acc)
                 logger.info(f'time spent on testing: {time.time() - t}')
