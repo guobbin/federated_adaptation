@@ -1,5 +1,5 @@
 ## Salvaging Federated Learning by Local Adaptation
-
+ 
 #### Authors:
 * [Tao Yu](http://www.cs.cornell.edu/~tyu/)
 * [Eugene Bagdasaryan](https://ebagdasa.github.io)
